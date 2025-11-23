@@ -69,25 +69,6 @@ def pilihan_log_cust():
         except:
             print("pilihan tidak valid")
             
-def login_admin():
-    while True:
-        kursor, conn = KoneksiDB()
-        username_admin = input('Masukkan Username Anda: ')
-        password_admin = input('Masukkan Password Anda: ')
-        query = "select id_akun from akun where username = %s and password = %s and role_id_role = 1"
-        try:
-            kursor.execute(query, (username_admin, password_admin))
-            cek_akun = kursor.fetchone()
-            if cek_akun is not None:
-                print('======LOGIN BERHASIL======')
-                idakun = cek_akun[0]
-                menu_admin(idakun)
-                conn.close()
-                break
-            else:
-                print('======LOGIN GAGAL======\nKesalahan Pada Username atau Password, Silahkan Ulangi Lagi')
-        except Exception as e:
-            print(f"Terjadi Kesalahan : {e}")    
        
 def login_customer():
     while True:
@@ -109,9 +90,53 @@ def login_customer():
         except Exception as e:
             print(f"Terjadi Kesalahan : {e}")
 
-def login_karyawan():
+
+def login_admin():
     while True:
-        conn, kursor = KoneksiDB()
+        kursor, conn = KoneksiDB()
+        username_admin = input('Masukkan Username Anda: ')
+        password_admin = input('Masukkan Password Anda: ')
+        query = "select id_akun from akun where username = %s and password = %s and role_id_role = 1"
+        try:
+            kursor.execute(query, (username_admin, password_admin))
+            cek_akun = kursor.fetchone()
+            if cek_akun is not None:
+                print('======LOGIN BERHASIL======')
+                idakun = cek_akun[0]
+                menu_admin(idakun)
+                conn.close()
+                break
+            else:
+                print('======LOGIN GAGAL======\nKesalahan Pada Username atau Password, Silahkan Ulangi Lagi')
+        except Exception as e:
+            print(f"Terjadi Kesalahan : {e}")   
+            
+
+def lihat_produkA(idakun):
+    kursor, conn = KoneksiDB()
+    query = "select * from produk order by status_produk"
+    try:
+        kursor.execute(query)
+        data = kursor.fetchall()
+        header= [d[0]for d in kursor.description]
+        print (tabulate(data, headers=header, tablefmt='psql'))
+    except Exception as e:
+        print(f"Terjadi Kesalahan : {e}")
+    kursor.close()
+    conn.close() 
+
+
+
+
+
+
+
+
+
+
+def login_karyawan():
+    conn, kursor = KoneksiDB()
+    while True:
         username_karyawan = input('Masukkan Username Anda: ')
         password_karyawan = input('Masukkan Password Anda: ')
         query = "select id_akun from akun where username = %s and password = %s and role_id_role = 2"
@@ -119,7 +144,7 @@ def login_karyawan():
             kursor.execute(query, (username_karyawan, password_karyawan))
             cek_akun = kursor.fetchone()
             if cek_akun is not None:
-                print('======LOGIN BERHASIL======')
+                print('======LOGIN BERHASIL======\n')
                 idkaryawan = cek_akun[0]
                 menu_karyawan(idkaryawan)
                 conn.close()
@@ -128,43 +153,6 @@ def login_karyawan():
                 print('======LOGIN GAGAL======\nKesalahan Pada Username atau Password, Silahkan Ulangi Lagi')
         except Exception as e:
             print(f"Terjadi Kesalahan : {e}")
-
-
-
-
-
-def menu_karyawan(idkaryawan):
-    while True:
-        try:
-            print ("======MENU======")
-            print ("1. Melihat Produk\n2. Mengelola Stock\n3. Mengelola Pesanan\n4. Exit")
-            pilihan_karyawan = input ("Masukan pilihan:")
-            if pilihan_karyawan == "1":
-                lihat_produk_karyawan()
-                enter()
-                continue
-            elif pilihan_karyawan == "2":
-                lihat_stok_redy()
-                enter()
-                update_stock()
-                continue
-            elif pilihan_karyawan == "3":  
-                kelola_pesanan_cust()
-                continue
-            elif pilihan_karyawan == "4":  
-                break
-            else:
-                print("Kocak gada pilihan tod")
-        except:
-            print ("Ggl")
-    
-    
-
-
-
-
-
-
 
 def lihat_produk_karyawan():
     conn, kursor = KoneksiDB()
@@ -181,36 +169,20 @@ def lihat_produk_karyawan():
         print (f"Terjadi Kesalahan : {e}")
 
 
-def lihat_stok_redy():
-    conn, kursor = KoneksiDB()
-    try:
-        query = "SELECT id_produk,nama_produk,harga,stock FROM produk where stock > 0 order by stock desc"
-        kursor.execute(query)
-        
-        data = kursor.fetchall()
-        header= [d[0]for d in kursor.description]
-        print (tabulate(data, headers=header, tablefmt='psql'))
-        
-        kursor.close(), conn.close()
-    except Exception as e:
-        print (f"Terjadi Kesalahan : {e}")
-        
-
 def update_stock():
     conn, kursor = KoneksiDB()
     try:
-        query = "SELECT id_produk, nama_produk, stock from produk order by id_produk"
+        query = "SELECT id_produk, nama_produk, stock from produk where stock > 0 order by id_produk"
         kursor.execute(query)
         data= kursor.fetchall()
-        
         header= [d[0] for d in kursor.description]
+        
         print ("\n==Daftar produk==")
         print (tabulate(data, headers=header, tablefmt='psql'))
         
-        print ("\n==Update Produk==")
-        id_produk = input ("Masukan id Produk:")
         
-        # query1= "SELECT stock from produk where id_produk = %s", (id_produk)
+        print ("\n==Update Produk==")
+        id_produk = input ("Masukan id Produk:  ")
         kursor.execute("SELECT stock from produk where id_produk = %s", (id_produk,))
         baris = kursor.fetchone()
         
@@ -219,7 +191,7 @@ def update_stock():
             return
         
         stock_sekarang= baris [0]
-        print (f"stock saat ini {stock_sekarang}")
+        print (f"Stock saat ini:     {stock_sekarang}")
         
         print ("\n==Pilih Metode Update==")
         print ("1. Set Stock Langsung")
@@ -230,23 +202,23 @@ def update_stock():
         if pilihan == "1":
             stock_baru = int(input("Masukan stok baru:"))
             if stock_baru < 0:
-                print("gaboleh negatif")
+                print("Tidak boleh negatif")
                 return
             query2 ="UPDATE produk SET stock = %s WHERE id_produk = %s"
             kursor.execute(query2, (stock_baru, id_produk))
 
         elif pilihan == "2":
-            tambah = int(input("tambah berapa? ->"))
+            tambah = int(input("Tambah Stock: "))
             stock_baru = stock_sekarang + tambah
             
             query3 ="UPDATE produk SET stock = %s WHERE id_produk = %s"
             kursor.execute(query3, (stock_baru, id_produk))
             
         elif pilihan == "3":
-            kurang = int(input("kurang berapa? ->"))
+            kurang = int(input("Mengurangi Stock: "))
             stock_baru = stock_sekarang - kurang
             if stock_baru < 0:
-                print("gaboleh negatif")
+                print("Tidak Boleh negatif")
                 return
             query4="UPDATE produk SET stock = %s WHERE id_produk = %s"
             kursor.execute(query4, (stock_baru, id_produk))
@@ -258,56 +230,110 @@ def update_stock():
         print (f"Stock berhasil di perbarui: {stock_baru}")
         
     except Exception as e:
-        print (f"terjadi kesalahan: {e}")
+        print (f"Terjadi kesalahan: {e}")
         conn.rollback()
         
     finally:
         kursor.close()
         conn.close() 
         
-
-# def kelola_pesanan_cust():
-#     conn, kursor = KoneksiDB()
-#     try:
-#         query = "SELECT * from pesanan"
-#         kursor.execute(query)
-        
-#         data = kursor.fetchall()
-#         header = [d[0] for d in kursor.description]
-#         print (tabulate(data, headers=header, floatfmt='psql'))
-        
-#     except Exception as e:
-#         print (f"Terjadi Kesalahan : {e}")
-        
-#     finally:
-#         kursor.close()
-#         conn.close()
- 
+                
 def kelola_pesanan_cust():
     clear()
     conn, kursor = KoneksiDB()
-    try:
-        query = '''
-        select p.id_pesanan , p.nama_pesanan,d.nama_produk, dp.jumlah_produk, dp.harga, ap.jalan_pesanan as "Tujuan Antar", p.status_pesanan 
-        from pesanan p
-        join alamat_pesanan ap on p.alamat_pesanan_id_alamat_pesanan = ap.id_alamat_pesanan
-        join detail_pesanan dp on p.id_pesanan = dp.pesanan_id_pesanan
-        join produk d on dp.produk_id_produk = d.id_produk
-        '''
-        kursor.execute(query)
-        
-        data = kursor.fetchall()
-        header = [d[0] for d in kursor.description]
-        print (tabulate(data, headers=header, floatfmt='psql'))
-        
-    except Exception as e:
-        print (f"Terjadi Kesalahan : {e}")
-        
-    finally:
-        kursor.close()
-        conn.close()       
-        
+    query1 = "SELECT id_pesanan, nama_pesanan from pesanan order by id_pesanan"
+    query2 = '''
+    select pr.nama_produk, dp.jumlah_produk, dp.harga
+    from pesanan p
+    join detail_pesanan dp on p.id_pesanan=dp.pesanan_id_pesanan
+    join produk pr on dp.produk_id_produk = pr.id_produk 
+    where id_pesanan = %s
+    '''
+    query3 = "update pesanan set status_pesanan = 'Diantar' where id_pesanan = %s"
+    query4 = '''
+    select p.nama_pesanan, pr.nama_produk, dp.jumlah_produk, dp.harga, p.status_pesanan
+    from pesanan p
+    join detail_pesanan dp on p.id_pesanan=dp.pesanan_id_pesanan
+    join produk pr on dp.produk_id_produk = pr.id_produk 
+    where p.status_pesanan = 'Diantar' and id_pesanan = %s
+    '''
+    
+    while True:
+        try:
+            #Menampilkan List pesanan
+            kursor.execute(query1)
+            data = kursor.fetchall()
+            header = [d[0] for d in kursor.description]
+            print (tabulate(data, headers=header, tablefmt='psql'))
+            
+            #Validasi ID
+            data_list = [i[0] for i in data]
+            print ("==========PILIH ID PESANAN==========")    
+            try:
+                input_id = int (input("Pilih ID pesanan yang mau diproses: "))
+                while input_id not in data_list:
+                    print ("ID Pesanan yang anda masukan salah..")
+                    input_id = int (input("Pilih ID pesanan yang mau diproses: "))
+                    continue
+            except ValueError:
+                print ("Inputan harus berupa angka!!")
+                continue
+            
+            #Menampilkan Detail Pesanan
+            kursor.execute(query2, (input_id,))
+            data2 = kursor.fetchall()
+            header2 = [d[0] for d in kursor.description]
+            print (tabulate(data2, headers=header2, tablefmt='psql'))
+            
+            #Konfirmasi
+            input_karyawan = (input("Apakah pesanan akan dikirimkan?"))
+            enter()
+            
+            #Update Status
+            kursor.execute(query3, (input_id,))
+            conn.commit()
+            print ("Pesanan segera dikirimkan!!")
+            
+            #Menampilkan Pesanan yang mau diantar
+            kursor.execute(query4, (input_id,))
+            data3 = kursor.fetchall()
+            header3 = [d[0] for d in kursor.description]
+            print (tabulate(data3, headers=header3, tablefmt='psql'))
+              
+        except Exception as e:
+            print (f"Terjadi Kesalahan : {e}")
+            
+        finally:
+            kursor.close()
+            conn.close()           
+        break
 
-clear()
+
+
+def menu_karyawan(idkaryawan):
+    while True:
+        try:
+            print ("======MENU======")
+            print ("1. Melihat Produk\n2. Mengelola Stock\n3. Mengelola Pesanan\n4. Keluar")
+            pilihan_karyawan = input ("Masukan pilihan:")
+            if pilihan_karyawan == "1":
+                lihat_produk_karyawan()
+                enter()
+                continue
+            elif pilihan_karyawan == "2":
+                update_stock()
+                enter()
+                continue
+            elif pilihan_karyawan == "3":  
+                kelola_pesanan_cust()
+                continue
+            elif pilihan_karyawan == "4":  
+                break
+            else:
+                print("Pilihan Tidak Valid!")
+        except:
+            print ("Terjadi Kesalahan")
+
+
 login()
-
+# kelola_pesanan_cust()
